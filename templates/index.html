@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Telegram Info Finder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            width: 100%;
+        }
+        button {
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: none;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            text-align: center;
+        }
+        .result img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 15px;
+        }
+        .info {
+            text-align: left;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .info p {
+            margin: 5px 0;
+            font-size: 15px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Telegram Info Finder</h1>
+        <form id="searchForm">
+            <input type="text" id="queryInput" placeholder="Enter username or user ID" required>
+            <button type="submit">Search</button>
+        </form>
+        <div id="resultArea"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('searchForm');
+        const queryInput = document.getElementById('queryInput');
+        const resultArea = document.getElementById('resultArea');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = queryInput.value.trim();
+            if(!query) return;
+
+            resultArea.innerHTML = "<p>Loading...</p>";
+
+            try {
+                const res = await fetch(`/api/info?query=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if(data.status === 'error') {
+                    resultArea.innerHTML = `<p class="error">${data.message}</p>`;
+                    return;
+                }
+
+                const info = data.data;
+                let html = '';
+
+                // Profile photo
+                if(info.photo_url && info.photo_url !== 'N/A') {
+                    html += `<div class="result"><img src="${info.photo_url}" alt="Profile Photo"></div>`;
+                }
+
+                // Info details
+                html += `<div class="info">`;
+                for(const key in info) {
+                    if(key === 'photo_url' || key === 'bot_api') continue;
+                    const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    html += `<p><strong>${displayKey}:</strong> ${info[key]}</p>`;
+                }
+
+                // Optional: Bot API extra data
+                if(info.bot_api) {
+                    html += `<hr><p><strong>Bot API Info:</strong></p>`;
+                    for(const key in info.bot_api) {
+                        html += `<p><strong>${key.replace(/_/g, ' ')}:</strong> ${info.bot_api[key]}</p>`;
+                    }
+                }
+
+                html += `</div>`;
+                resultArea.innerHTML = html;
+
+            } catch (err) {
+                resultArea.innerHTML = `<p class="error">Error fetching info. Try again.</p>`;
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>
