@@ -2,4 +2,5 @@ Flask
 telethon
 requests
 python-dateutil
-aiohttp
+uvicorn
+gunicorn
