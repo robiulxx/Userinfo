@@ -1,4 +1,5 @@
 Flask
 telethon
-aiohttp
+requests
 python-dateutil
+aiohttp
