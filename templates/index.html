@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Telegram Info Finder</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#f3f4f6;margin:0;padding:30px;display:flex;justify-content:center}
+  .card{width:100%;max-width:680px;background:#fff;padding:22px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.08)}
+  h1{text-align:center;margin:0 0 14px 0}
+  .controls{display:flex;gap:8px;margin-bottom:16px}
+  input[type="text"]{flex:1;padding:12px;border-radius:10px;border:1px solid #d1d5db;font-size:16px}
+  button{padding:12px 16px;border-radius:10px;border:none;background:#0b74ff;color:white;cursor:pointer}
+  button:active{transform:translateY(1px)}
+  .result{margin-top:18px;text-align:center}
+  .photo{width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #0b74ff;margin:0 auto 12px auto;display:block}
+  .info{display:block;text-align:left;background:#fafafa;padding:12px;border-radius:10px;max-width:520px;margin:0 auto}
+  .info p{margin:6px 0;font-size:15px}
+  .error{color:#dc2626;font-weight:700;margin-top:8px;text-align:center}
+  .small{font-size:13px;color:#6b7280}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Telegram Info Finder</h1>
+    <div class="controls">
+      <input id="query" placeholder="Enter username (e.g. @alice) or numeric id (-100... or 12345)" />
+      <button id="btn">Search</button>
+    </div>
+    <div id="msg" class="small" style="text-align:center;margin-bottom:8px">Username → Telethon | Numeric ID → Bot API</div>
+
+    <div id="result" class="result"></div>
+    <div id="error" class="error"></div>
+  </div>
+
+<script>
+document.getElementById('btn').addEventListener('click', doSearch);
+document.getElementById('query').addEventListener('keypress', function(e){ if(e.key === 'Enter') doSearch(); });
+
+async function doSearch(){
+  const q = document.getElementById('query').value.trim();
+  const resultDiv = document.getElementById('result');
+  const errorDiv = document.getElementById('error');
+  resultDiv.innerHTML = '';
+  errorDiv.innerText = '';
+  if(!q) { errorDiv.innerText = 'Please enter username or numeric id.'; return; }
+  resultDiv.innerHTML = '<div class="small">Loading…</div>';
+
+  try{
+    const res = await fetch(`/api/info?query=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if(data.status === 'success'){
+      const d = data.data;
+      let photoHtml = '';
+      if(d.photo && d.photo !== 'N/A'){
+        photoHtml = `<img src="${d.photo}" class="photo" alt="profile">`;
+      }
+      // Build fields (order prioritized)
+      let fields = '';
+      if(d.title) fields += `<p><strong>Title / Name:</strong> ${d.title}</p>`;
+      if(d.full_name) fields += `<p><strong>Full Name:</strong> ${d.full_name}</p>`;
+      if(d.first_name) fields += `<p><strong>First Name:</strong> ${d.first_name}</p>`;
+      if(d.last_name) fields += `<p><strong>Last Name:</strong> ${d.last_name}</p>`;
+      if(d.name) fields += `<p><strong>Name:</strong> ${d.name}</p>`;
+      if(d.username) fields += `<p><strong>Username:</strong> ${d.username}</p>`;
+      if(d.id) fields += `<p><strong>ID:</strong> ${d.id}</p>`;
+      if(d.type) fields += `<p><strong>Type:</strong> ${d.type}</p>`;
+      if(d.source) fields += `<p><strong>Source:</strong> ${d.source}</p>`;
+      if(d.is_verified !== undefined) fields += `<p><strong>Verified:</strong> ${d.is_verified}</p>`;
+      if(d.is_premium !== undefined) fields += `<p><strong>Premium:</strong> ${d.is_premium}</p>`;
+      if(d.status) fields += `<p><strong>Status:</strong> ${d.status}</p>`;
+      if(d.account_created) fields += `<p><strong>Account created:</strong> ${d.account_created}</p>`;
+      if(d.account_age) fields += `<p><strong>Account age:</strong> ${d.account_age}</p>`;
+      if(d.participants_count) fields += `<p><strong>Members:</strong> ${d.participants_count}</p>`;
+
+      // BotAPI raw (for numeric) include minimal useful info
+      if(d.raw) {
+        try {
+          const raw = d.raw;
+          if(raw.type) fields += `<p><strong>Chat type:</strong> ${raw.type}</p>`;
+          if(raw.description) fields += `<p><strong>Description:</strong> ${raw.description}</p>`;
+        } catch(e){}
+      }
+
+      resultDiv.innerHTML = photoHtml + `<div class="info">${fields}</div>`;
+    } else {
+      resultDiv.innerHTML = '';
+      errorDiv.innerText = data.message || 'Error fetching info.';
+    }
+  }catch(err){
+    resultDiv.innerHTML = '';
+    errorDiv.innerText = 'Internal error. Check server logs.';
+    console.error(err);
+  }
+}
+</script>
+</body>
+</html>
