@@ -3,7 +3,8 @@ import asyncio
 import aiohttp
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, send_from_directory, jsonify
+
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.tl.functions.channels import GetFullChannelRequest
@@ -138,7 +139,6 @@ async def get_entity_info_telethon(query):
 
 # --- Async Bot API fetch ---
 async def get_entity_info_bot_api(user_id):
-    import aiohttp
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/getChat?chat_id={user_id}"
     async with aiohttp.ClientSession() as session:
         try:
@@ -168,17 +168,17 @@ async def get_entity_hybrid(query):
 
 # --- Flask routes ---
 @app.route('/')
-def index(): return render_template('index.html')
+def index(): 
+    # Just serve the HTML; JS handles fetch
+    from flask import render_template
+    return render_template('index.html')
 
 @app.route('/search', methods=['POST'])
 def search_web():
-    query = request.form.get('username')
-    result = asyncio.run(get_entity_hybrid(query))
-    return render_template('result.html',
-                           info=result['data'] if result['status']=='success' else None,
-                           error=result['message'] if result['status']=='error' else None)
+    # JS handles API fetch, so this can just redirect or ignore
+    from flask import redirect
+    return redirect('/')
 
-# ✅ Changed route to /api/info
 @app.route('/api/info')
 def api_info():
     query = request.args.get('query')
