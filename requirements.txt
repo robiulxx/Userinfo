@@ -1,6 +1,4 @@
-Flask
-telethon
+flask
 requests
 python-dateutil
-uvicorn
 gunicorn
