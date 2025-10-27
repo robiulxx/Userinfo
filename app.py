@@ -4,8 +4,8 @@ import os
 import requests
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from flask import Flask, render_template_string, request, Markup
-
+from flask import Flask, render_template_string, request
+from markupsafe import Markup
 # ===================================================================
 # 📦 আপনার মূল লজিক (OfficialBotAPI ক্লাস, Formatting Functions, ইত্যাদি)
 # ===================================================================
